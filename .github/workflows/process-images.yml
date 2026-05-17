@@ -1,4 +1,4 @@
-name: Process Staged Images to AVIF
+name: Convert Staged Images to AVIF
 
 on:
   push:
@@ -27,13 +27,25 @@ jobs:
       - name: Install Sharp
         run: npm install sharp
 
-      - name: Process staged images to AVIF
+      - name: Convert images to AVIF
         run: node scripts/process-images.js
 
-      - name: Commit processed AVIF images
+      - name: Commit AVIF images
         run: |
           git config user.name 'Sedon Image Processor'
           git config user.email 'actions@github.com'
           git add images/ staging/
-          git diff --staged --quiet || git commit -m "chore: process staged images to AVIF [skip ci]"
+          git diff --staged --quiet || git commit -m "chore: convert staged images to AVIF [skip ci]"
           git push
+
+      - name: Notify Sedon VPS (upgrade DB URLs)
+        if: env.MAPPINGS != ''
+        env:
+          MAPPINGS: ${{ env.MAPPINGS }}
+          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+          SEDON_WEBHOOK_URL: ${{ secrets.SEDON_WEBHOOK_URL }}
+        run: |
+          curl -s -X POST "$SEDON_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -H "x-webhook-secret: $WEBHOOK_SECRET" \
+            -d "{\"mappings\":$MAPPINGS}"
