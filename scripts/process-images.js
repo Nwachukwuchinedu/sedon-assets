@@ -91,6 +91,13 @@ async function main() {
         continue;
       }
 
+      // Already AVIF — nothing to convert, just clean up the trigger
+      if (ext === 'avif') {
+        console.log(stem + ' is already AVIF — keeping original');
+        fs.unlinkSync(full);
+        continue;
+      }
+
       const inKB = Math.round(fs.statSync(rawPath).size / 1024);
       process.stdout.write('Converting ' + stem + '.' + ext + ' (' + inKB + 'KB) → AVIF ... ');
       try {
